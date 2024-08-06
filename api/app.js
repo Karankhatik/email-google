@@ -94,10 +94,12 @@ app.get('/auth', (req, res) => {
     const url = oauth2Client.generateAuthUrl({
         access_type: 'offline', // Important: This ensures we receive a refresh token
         scope: [
-            'https://mail.google.com/',
-            'https://www.googleapis.com/auth/userinfo.email' // Scope to get the user's email
+            'https://www.googleapis.com/auth/userinfo.email',
+            'https://mail.google.com',
+            'openid', // Request authentication and an ID token
         ],
-        state: state
+        state: state,
+        prompt: 'consent',
     });
     res.status(200).json({ url, success: true, message: "success" });
 });
@@ -153,18 +155,20 @@ app.post('/sendMail', async (req, res) => {
     try {
         const { senderMail, receiverMail, subject, text } = req.body;
 
+        const googleOAuthData = await GoogleOauth.findOne({ userID: req.query.userID });
+        if (!googleOAuthData) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
 
-        const { userEmail, refershToken } = await GoogleOauth.findOne({ userID: req.query.userID });
+        const { userEmail, refreshToken } = googleOAuthData;
 
-        oauth2Client.setCredentials({
-            refresh_token: refershToken
+        OAuth2Client.setCredentials({
+            refresh_token: refreshToken
         });
 
-        // Fetch the token
-        const accessTokenResponse = await oauth2Client.getAccessToken();
-
-        // Accessing the access tokens
-        const accessToken = accessTokenResponse.res.data.access_token;
+        // Fetch the access token
+        const accessTokenResponse = await OAuth2Client.getAccessToken();
+        const accessToken = accessTokenResponse.token;
 
         const transporter = nodemailer.createTransport({
             service: 'gmail',
@@ -173,7 +177,7 @@ app.post('/sendMail', async (req, res) => {
                 user: userEmail,
                 clientId: process.env.CLIENT_ID,
                 clientSecret: process.env.CLIENT_SECRET,
-                refreshToken: refershToken,
+                refreshToken: refreshToken,
                 accessToken: accessToken
             }
         });
@@ -190,21 +194,6 @@ app.post('/sendMail', async (req, res) => {
 
         console.log("Email sent: %s", result);
 
-        console.log("Email sent: accepted %s", result.accepted);
-
-        console.log("Email sent: envelope %s", result.envelope);
-        console.log("Email sent: ehlo %s", result.ehlo);
-        // Save the email details including messageId and possibly threadId to the database
-        const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
-
-        // Get the threadId from the sent email
-        // const sentMessage = await gmail.users.messages.get({
-        //     userId: 'me',
-        //     id: result.messageId.replace('<', '').replace('>', '')
-        // });
-
-        // console.log(sentMessage);
-
         // Save the email details including messageId to the database
         const newEmail = new Email({
             messageId: result.messageId, // Assuming Nodemailer provides this correctly
@@ -218,8 +207,10 @@ app.post('/sendMail', async (req, res) => {
         console.log("Message sent: %s", result.messageId);
     } catch (error) {
         console.log(error);
+        res.status(500).json({ success: false, message: 'Failed to send email' });
     }
-})
+});
+
 
 app.delete('/disconnect', async (req, res) => {
     try {
