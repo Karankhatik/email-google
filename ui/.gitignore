@@ -1,0 +1,6 @@
+/api/node_modules
+/api/package-lock.json
+/api/.env
+/ui/node_modules
+/ui/package-lock.json
+/ui/.env
