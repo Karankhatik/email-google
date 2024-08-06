@@ -104,40 +104,36 @@ app.get('/auth', (req, res) => {
 
 
 app.get('/oauth2callback', async (req, res) => {
-
-
     try {
         const { code, state } = req.query;
         console.log("code", code, "state", state);
 
         // Get the access token and refresh token from the authentication server
-        const { tokens } = await oauth2Client.getToken(code);
+        const { tokens } = await OAuth2Client.getToken(code);
 
         // Set the credentials for the OAuth2 client
-        oauth2Client.setCredentials({
-            refresh_token: tokens.refresh_token
-        });
+        OAuth2Client.setCredentials(tokens);
 
         // Fetch user information from the authentication server
         const oauth2 = google.oauth2({
-            auth: oauth2Client,
+            auth: OAuth2Client,
             version: 'v2'
         });
 
         const userInfo = await oauth2.userinfo.get();
         const email = userInfo.data.email;
 
-        const googleOAuthData = await GoogleOauth.findOne({ userID: state });
+        let googleOAuthData = await GoogleOauth.findOne({ userID: state });
         if (googleOAuthData) {
             googleOAuthData.userEmail = email;
-            googleOAuthData.refershToken = tokens.refresh_token;
+            googleOAuthData.refreshToken = tokens.refresh_token;
             googleOAuthData.accessToken = tokens.access_token;
             googleOAuthData.isConnected = true;
             await googleOAuthData.save();
         } else {
-            await GoogleOauth.create({
+            googleOAuthData = await GoogleOauth.create({
                 userEmail: email,
-                refershToken: tokens.refresh_token,
+                refreshToken: tokens.refresh_token,
                 accessToken: tokens.access_token,
                 isConnected: true,
                 userID: state
@@ -149,6 +145,7 @@ app.get('/oauth2callback', async (req, res) => {
         res.redirect('https://email-google.vercel.app');
     } catch (error) {
         console.log(error);
+        res.status(500).json({ success: false, message: 'Authentication failed' });
     }
 });
 
