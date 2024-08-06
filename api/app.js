@@ -109,14 +109,14 @@ app.get('/oauth2callback', async (req, res) => {
         console.log("code", code, "state", state);
 
         // Get the access token and refresh token from the authentication server
-        const { tokens } = await OAuth2Client.getToken(code);
+        const { tokens } = await oauth2Client.getToken(code);
 
         // Set the credentials for the OAuth2 client
-        OAuth2Client.setCredentials(tokens);
+        oauth2Client.setCredentials(tokens);
 
         // Fetch user information from the authentication server
         const oauth2 = google.oauth2({
-            auth: OAuth2Client,
+            auth: oauth2Client,
             version: 'v2'
         });
 
