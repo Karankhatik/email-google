@@ -83,10 +83,10 @@ const checkForReplies = async () => {
 };
 
 
-cron.schedule('* * * * *', () => {
-    console.log('Checking for replies every minute...');
-    checkForReplies();
-});
+// cron.schedule('* * * * *', () => {
+//     console.log('Checking for replies every minute...');
+//     checkForReplies();
+// });
 
 app.get('/auth', (req, res) => {
     let state = req.query.userID;
@@ -146,7 +146,7 @@ app.get('/oauth2callback', async (req, res) => {
 
         console.log("google auth data ", googleOAuthData);
 
-        res.redirect('http://localhost:3000/');
+        res.redirect('https://email-google.vercel.app');
     } catch (error) {
         console.log(error);
     }
@@ -251,7 +251,7 @@ app.get('/', (req, res) => {
     res.send('server is running!');
 })
 
-app.listen(5000, () => {
+app.listen(process.env.PORT || 5000, () => {
     console.log('Server listening on port 3000  --> http://localhost:5000');
     console.log('click on this link to get auth: http://localhost:3000/auth');
 });

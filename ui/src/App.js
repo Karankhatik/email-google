@@ -16,7 +16,7 @@ function App() {
 
   const getGoogleOauth = async () => {
     try {
-      const response = await fetch('http://localhost:5000/authSetting?userID=123', {
+      const response = await fetch('https://email-google.onrender.com/authSetting?userID=123', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -35,7 +35,7 @@ function App() {
 
   const disconnect = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/disconnect?email=${email}`, {
+      const response = await fetch(`https://email-google.onrender.com/disconnect?email=${email}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -53,7 +53,7 @@ function App() {
 
   const connect = async () => {
     // Redirects to the Google OAuth2 URL
-    const response = await fetch('http://localhost:5000/auth?userID=123', {
+    const response = await fetch('https://email-google.onrender.com/auth?userID=123', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -70,7 +70,7 @@ function App() {
   const sendMail = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:5000/sendMail?userID=123', {
+      const response = await fetch('https://email-google.onrender.com/sendMail?userID=123', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
