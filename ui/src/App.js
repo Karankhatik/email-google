@@ -5,18 +5,21 @@ function App() {
 
   const [isConnected, setIsConnected] = useState(false);
   const [email, setEmail] = useState(null);
+  const [userId, setUserId] = useState('123'); // Default userID
   const [senderEmail, setSenderEmail] = useState('');
   const [receiverEmail, setReceiverEmail] = useState('');
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
 
   useEffect(() => {    
-    getGoogleOauth();
-  }, []);
+    if(userId) {
+      getGoogleOauth(userId);
+    }
+  }, [userId]);
 
-  const getGoogleOauth = async () => {
+  const getGoogleOauth = async (userId) => {
     try {
-      const response = await fetch('https://email-google.onrender.com/authSetting?userID=123', {
+      const response = await fetch(`https://email-google.onrender.com/authSetting?userID=${userId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -51,26 +54,29 @@ function App() {
     }
   };
 
-  const connect = async () => {
-    // Redirects to the Google OAuth2 URL
-    const response = await fetch('https://email-google.onrender.com/auth?userID=123', {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    const result = await response.json();
-    console.log(result);
-    if(result.success){
-      console.log(result.url);
-      window.open(result.url, '_self');
+  const connect = async (userId) => {
+    try {
+      const response = await fetch(`https://email-google.onrender.com/auth?userID=${userId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      const result = await response.json();
+      console.log(result);
+      if(result.success){
+        console.log(result.url);
+        window.open(result.url, '_self');
+      }
+    } catch (error) {
+      console.log(error);
     }
   };
 
   const sendMail = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('https://email-google.onrender.com/sendMail?userID=123', {
+      const response = await fetch(`https://email-google.onrender.com/sendMail?userID=${userId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -93,10 +99,16 @@ function App() {
 
   return (
     <>
-      <button onClick={isConnected ? disconnect : connect}>
+      <div>
+        <button onClick={() => setUserId('123')}>Connect User 123</button>
+        <button onClick={() => setUserId('456')}>Connect User 456</button>
+        <button onClick={() => setUserId('789')}>Connect User 789</button>
+      </div>
+
+      <button onClick={isConnected ? disconnect : () => connect(userId)}>
         {isConnected ? 'Disconnect' : 'Connect'}
       </button>
-      <p>{isConnected ? `You are connecterd to ${email}` : 'you are disconnected'}</p>
+      <p>{isConnected ? `You are connected to ${email}` : 'You are disconnected'}</p>
 
       {isConnected && (
         <form onSubmit={sendMail}>

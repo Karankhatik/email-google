@@ -10,10 +10,6 @@ const Email = require('./models/email.js');
 
 //connecting to the database
 connectDatabase();
-const cron = require('node-cron');
-
-
-
 
 app.use((req, res, next) => {
     res.header("Content-Type", "application/json")
@@ -31,62 +27,7 @@ const oauth2Client = new google.auth.OAuth2(
     process.env.REDIRECT_URI
 );
 
-// const checkForReplies = async () => {
-//     // Fetch all emails that have been sent out
-//     const emails = await Email.find();
 
-
-//     const user = await GoogleOauth.findOne(); // Assuming there's only one user
-
-//     if (!user || !user.isConnected) {
-//         console.log("No connected user found.");
-//         return;
-//     }
-
-//     oauth2Client.setCredentials({
-//         refresh_token: user.refershToken
-//     });
-
-//     const gmail = google.gmail({ version: 'v1', auth: oauth2Client });
-
-    
-//         try {
-//             // let rawId = email.messageId;
-//             // let cleanedId = rawId.replace(/[<>]/g, '');  // Removes angle brackets
-//             //console.log(`Checking for cleanedId for email with ID: ${cleanedId}`);
-//             const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-//             res = await gmail.users.messages.list({
-//                 userId: 'me',
-//                 q: `in:inbox subject:"Re: " after:${Math.floor(Date.now() / 1000) - 60 * 60}`,
-//             });
-
-//             console.log("res.data.messages: ", res.data.messages[0]);
-           
-
-//             const messages = res.data.messages;
-//             if (messages && messages.length > 0) {
-//                 for (let message of messages) {
-//                     const reply = await gmail.users.messages.get({
-//                         userId: 'me',
-//                         id: message.id,
-//                     });
-//                     console.log('Reply: ', reply.data.snippet);
-//                 }
-//             } else {
-//                 console.log(`No replies found for email ID: ${cleanedId}`);
-//             }
-
-//         } catch (error) {
-//             console.error(`Failed to check for replies for email with ID`, error);
-//         }
-  
-// };
-
-
-// cron.schedule('* * * * *', () => {
-//     console.log('Checking for replies every minute...');
-//     checkForReplies();
-// });
 
 app.get('/auth', (req, res) => {
     let state = req.query.userID;
