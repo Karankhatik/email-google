@@ -30,11 +30,11 @@ const oauth2Client = new google.auth.OAuth2(
 
 
 app.get('/auth', (req, res) => {
-    let state = {
+    let state = JSON.stringify({
         userID: req.query.userID,
         for: 'asdsdgsg',
         userLoginID: "1231"
-    };
+    });
 
     const url = oauth2Client.generateAuthUrl({
         access_type: 'offline', // Important: This ensures we receive a refresh token
@@ -52,7 +52,10 @@ app.get('/auth', (req, res) => {
 
 app.get('/oauth2callback', async (req, res) => {
     try {
-        const { code, state } = req.query;
+        let { code, state } = req.query;
+        
+
+        state = JSON.parse(state);
         console.log("code", code, "state", state);
 
         // Get the access token and refresh token from the authentication server
@@ -73,17 +76,15 @@ app.get('/oauth2callback', async (req, res) => {
         let googleOAuthData = await GoogleOauth.findOne({ userID: state.userID });
         if (googleOAuthData) {
             googleOAuthData.userEmail = email;
-            googleOAuthData.refreshToken = tokens.refresh_token;
-            googleOAuthData.accessToken = tokens.access_token;
+            googleOAuthData.refershToken = tokens.refresh_token;
             googleOAuthData.isConnected = true;
             await googleOAuthData.save();
         } else {
             googleOAuthData = await GoogleOauth.create({
                 userEmail: email,
                 refreshToken: tokens.refresh_token,
-                accessToken: tokens.access_token,
                 isConnected: true,
-                userID: state
+                userID: state.userID
             });
         }
 
