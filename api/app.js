@@ -41,7 +41,6 @@ app.get('/auth', (req, res) => {
         scope: [
             'https://www.googleapis.com/auth/userinfo.email',
             'https://mail.google.com',
-            'openid', // Request authentication and an ID token
         ],
         state: state,
         prompt: 'consent',
