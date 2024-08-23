@@ -2,20 +2,16 @@ import React, { useEffect, useState } from 'react';
 import './App.css';
 
 function App() {
-
-  const [isConnected, setIsConnected] = useState(false);
-  const [email, setEmail] = useState(null);
-  const [userId, setUserId] = useState('123'); // Default userID
+  const [connections, setConnections] = useState({}); // Store connection status for multiple users
   const [senderEmail, setSenderEmail] = useState('');
   const [receiverEmail, setReceiverEmail] = useState('');
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
 
-  useEffect(() => {    
-    if(userId) {
-      getGoogleOauth(userId);
-    }
-  }, [userId]);
+  useEffect(() => {
+    // Load initial connection statuses for multiple users
+    ['123', '456', '789'].forEach((userId) => getGoogleOauth(userId));
+  }, []);
 
   const getGoogleOauth = async (userId) => {
     try {
@@ -27,18 +23,19 @@ function App() {
       });
       const result = await response.json();
       if (result.success) {
-        console.log(result);
-        setIsConnected(result.result.isConnected);
-        setEmail(result.result.userEmail);
+        setConnections((prev) => ({
+          ...prev,
+          [userId]: { isConnected: result.result.isConnected, email: result.result.userEmail },
+        }));
       }
     } catch (error) {
       console.log(error);
     }
   };
 
-  const disconnect = async () => {
+  const disconnect = async (userId) => {
     try {
-      const response = await fetch(`https://email-google.onrender.com/disconnect?email=${email}`, {
+      const response = await fetch(`https://email-google.onrender.com/disconnect?email=${connections[userId]?.email}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -46,8 +43,10 @@ function App() {
       });
       const result = await response.json();
       if (result.success) {
-        setIsConnected(false);
-        setEmail(null);
+        setConnections((prev) => ({
+          ...prev,
+          [userId]: { isConnected: false, email: null },
+        }));
       }
     } catch (error) {
       console.log(error);
@@ -63,9 +62,7 @@ function App() {
         },
       });
       const result = await response.json();
-      console.log(result);
-      if(result.success){
-        console.log(result.url);
+      if (result.success) {
         window.open(result.url, '_self');
       }
     } catch (error) {
@@ -73,7 +70,7 @@ function App() {
     }
   };
 
-  const sendMail = async (e) => {
+  const sendMail = async (e, userId) => {
     e.preventDefault();
     try {
       const response = await fetch(`https://email-google.onrender.com/sendMail?userID=${userId}`, {
@@ -99,45 +96,44 @@ function App() {
 
   return (
     <>
-      <div>
-        <button onClick={() => setUserId('123')}>Connect User 123</button>
-        <button onClick={() => setUserId('456')}>Connect User 456</button>
-        <button onClick={() => setUserId('789')}>Connect User 789</button>
-      </div>
+      {['123', '456', '789'].map((userId) => (
+        <div key={userId} style={{ marginBottom: '20px' }}>
+          <h3>User {userId}</h3>
+          <button onClick={connections[userId]?.isConnected ? () => disconnect(userId) : () => connect(userId)}>
+            {connections[userId]?.isConnected ? 'Disconnect' : 'Connect'}
+          </button>
+          <p>{connections[userId]?.isConnected ? `Connected to ${connections[userId]?.email}` : 'Disconnected'}</p>
 
-      <button onClick={isConnected ? disconnect : () => connect(userId)}>
-        {isConnected ? 'Disconnect' : 'Connect'}
-      </button>
-      <p>{isConnected ? `You are connected to ${email}` : 'You are disconnected'}</p>
-
-      {isConnected && (
-        <form onSubmit={sendMail}>
-          <label>Sender Email</label>
-          <input
-            type="email"
-            value={senderEmail}
-            onChange={(e) => setSenderEmail(e.target.value)}
-          />
-          <label>Receiver Email</label>
-          <input
-            type="email"
-            value={receiverEmail}
-            onChange={(e) => setReceiverEmail(e.target.value)}
-          />
-          <label>Subject</label>
-          <input
-            type="text"
-            value={subject}
-            onChange={(e) => setSubject(e.target.value)}
-          />
-          <label>Message</label>
-          <textarea
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-          />
-          <button type="submit">Send</button>
-        </form>
-      )}
+          {connections[userId]?.isConnected && (
+            <form onSubmit={(e) => sendMail(e, userId)}>
+              <label>Sender Email</label>
+              <input
+                type="email"
+                value={senderEmail}
+                onChange={(e) => setSenderEmail(e.target.value)}
+              />
+              <label>Receiver Email</label>
+              <input
+                type="email"
+                value={receiverEmail}
+                onChange={(e) => setReceiverEmail(e.target.value)}
+              />
+              <label>Subject</label>
+              <input
+                type="text"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+              />
+              <label>Message</label>
+              <textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+              />
+              <button type="submit">Send</button>
+            </form>
+          )}
+        </div>
+      ))}
     </>
   );
 }
